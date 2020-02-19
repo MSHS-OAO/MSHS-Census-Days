@@ -1,5 +1,4 @@
-#--------------------Census Days
-##Make sure to change dates in save file within Export Function and rerun the export function
+#--------------------Census Days For PP
 #-----Reads and manipulates raw file to be ready to append master file
 rawfile <- function(){
   #Read raw file
@@ -13,8 +12,8 @@ rawfile <- function(){
   filedays <- length(unique(raw2$Date))
   raw2<<-raw2
   stopifnot(filedays==14)
-  print(min(raw2$Date))
-  print(max(raw2$Date))
+  MinDate <<- print(min(raw2$Date))
+  MaxDate <<- print(max(raw2$Date))
 }
 
 #-----Append raw file to a master file after the rawfile function
@@ -32,7 +31,7 @@ master <- function(){
 }
 
 #-----Upload Cost Center Crosswalk and assign cost center to each department
-VolumeID <- function(date){
+VolumeID <- function(){
   setwd("J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/MSH Data/Inpatient Census Days/Calculation Worksheets")
   #upload volume ID crosswalk with every department and their respective volumeID
   Crosswalk <- read.csv("VolumeID.csv", check.names = F, colClasses = c(rep("factor",4)))
@@ -48,28 +47,38 @@ VolumeID <- function(date){
   #Append current PP census to PP Trend
   PPTrend_new <- cbind(PPTrend,PP2$Census)
   #adjust column name to the end date of this payperiod
-  colnames(PPTrend_new)[length(PPTrend_new)] <- date
+  colnames(PPTrend_new)[length(PPTrend_new)] <- as.character(paste0(substr(MaxDate,start=6,stop=7),"/",substr(MaxDate,start=9,stop=10),"/",substr(MaxDate,start=1,stop=4)))
   #Display PP Trend
   PPTrend_new <<- PPTrend_new
 }
 
 #-----Create census upload for PP
-#MAKE SURE TO CHANGE DATE IN SAVE TITLE
-Export <- function(date1,date2){
+Export <- function(){
   #Create upload format
-  upload <<- data.frame(partner="729805", hospital="NY0014", CC=PP2$`Cost Center`,start=date1, 
-                        end=date2, volumeID=paste0(PP2$`Cost Center`,"1"), Census=PP2$Census, budget="0",
+  ExportMax <- paste0(substr(MaxDate,start=6,stop=7),"/",substr(MaxDate,start=9,stop=10),"/",substr(MaxDate,start=1,stop=4))
+  ExportMin <- paste0(substr(MinDate,start=6,stop=7),"/",substr(MinDate,start=9,stop=10),"/",substr(MinDate,start=1,stop=4))
+  upload <<- data.frame(partner="729805", hospital="NY0014", CC=PP2$`Cost Center`,start=ExportMin, 
+                        end=ExportMax, volumeID=paste0(PP2$`Cost Center`,"1"), Census=PP2$Census, budget="0",
                         Unit = PPTrend_new$Department, Volume = "Patient Days")
 }
 
-Save <- function(file){
+Save <- function(){
   setwd("J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/MSH Data/Inpatient Census Days/Calculation Worksheets")
-  #overwrite the new master over the old master
-  write.csv(Masternew,"Master.csv", row.names = F)
+  library(lubridate)
+  smonth <- toupper(month.abb[month(MinDate)])
+  emonth <- toupper(month.abb[month(MaxDate)])
+  sday <- format(as.Date(MinDate, format="%Y-%m-%d"), format="%d")
+  eday <- format(as.Date(MaxDate, format="%Y-%m-%d"), format="%d")
+  syear <- substr(MinDate, start=1, stop=4)
+  eyear <- substr(MaxDate, start=1, stop=4)
+  name <- paste0("MSH_Census Days_",sday,smonth,syear," to ",eday,emonth,eyear,".csv")
   #save export
-  write.table(upload,file=file,sep=",",col.names=F,row.names=F)
+  write.table(upload,file=name,sep=",",col.names=F,row.names=F)
   #save PP Trend
   write.csv(PPTrend_new,file="PP_Trend.csv", row.names = F)
+  #overwrite the new master over the old master
+  MasterName <- paste0("Master - ",eday,emonth,eyear)
+  write.xlsx(as.data.frame(Masternew), "Master.xlsx", col.names = T, row.names = F, sheetName = MasterName )
 }
 
 #-----------------------------------------------------------------------------------------------
@@ -77,13 +86,12 @@ Save <- function(file){
 #Execute Functions
 rawfile()
 master()
-#date is the end date of the pp file
-VolumeID("11/23/2019")
-##date1 should equal the first date of the PP 
-##date2 should equal the last date of the PP
-Export(date1="11/10/2019",date2="11/23/2019")
+#Upload Cost Center Crosswalk and assign cost center to each department
+VolumeID()
+#Create census upload for PP
+Export()
 #Check Masternew, upload and PPTrend_new tables
-Save(file="MSH_Census Days_10NOV2019 to 23NOV2019.csv")
+Save()
 
 
 #In case you are doing multiple uploads
