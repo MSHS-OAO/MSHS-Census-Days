@@ -26,8 +26,15 @@ master <- function(){
   raw2$MonthYear <- dmy(paste0("19/",raw2$MonthYear))
   #put monthyear in same format as master table
   raw2$MonthYear <- as.POSIXct(raw2$MonthYear)
-  #append the current master with the new raw file to make the new master
-  Masternew <<- rbind(Masterold,raw2)
+  #Check max date in master file
+  MaxMaster <- max(Masterold$Date)
+  #Stop function if raw file and master overlap
+  if(MinDate <= MaxMaster){
+    warning("Master already has data for these dates")
+  } else {
+    #append the current master with the new raw file to make the new master
+    Masternew <<- rbind(Masterold,raw2)
+  }
 }
 
 #-----Upload Cost Center Crosswalk and assign cost center to each department
@@ -71,13 +78,14 @@ Save <- function(){
   eday <- format(as.Date(MaxDate, format="%Y-%m-%d"), format="%d")
   syear <- substr(MinDate, start=1, stop=4)
   eyear <- substr(MaxDate, start=1, stop=4)
-  name <- paste0("MSH_Census Days_",sday,smonth,syear," to ",eday,emonth,eyear,".csv")
+  name <- paste0("J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/MSH Data/Inpatient Census Days/Calculation Worksheets/Uploads/","MSH_Census Days_",sday,smonth,syear," to ",eday,emonth,eyear,".csv")
   #save export
   write.table(upload,file=name,sep=",",col.names=F,row.names=F)
   #save PP Trend
   write.csv(PPTrend_new,file="PP_Trend.csv", row.names = F)
   #overwrite the new master over the old master
   MasterName <- paste0("Master - ",eday,emonth,eyear)
+  library(xlsx)
   write.xlsx(as.data.frame(Masternew), "Master.xlsx", col.names = T, row.names = F, sheetName = MasterName )
 }
 
@@ -95,4 +103,5 @@ Save()
 
 
 #In case you are doing multiple uploads
-rm(Masternew,Masterold,PP2,raw,raw1,raw2,trend,upload,filedays,PP,Crosswalk)
+rm(Masternew,PP2,raw2,upload,PPTrend_new,MaxDate,MinDate)
+
