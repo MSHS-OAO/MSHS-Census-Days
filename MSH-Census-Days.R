@@ -70,6 +70,7 @@ Export <- function(){
 }
 
 Save <- function(){
+  library(openxlsx)
   setwd("J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/MSH Data/Inpatient Census Days/Calculation Worksheets")
   library(lubridate)
   smonth <- toupper(month.abb[month(MinDate)])
@@ -85,7 +86,6 @@ Save <- function(){
   write.csv(PPTrend_new,file="PP_Trend.csv", row.names = F)
   #overwrite the new master over the old master
   MasterName <- paste0("Master - ",eday,emonth,eyear)
-  library(xlsx)
   write.xlsx(as.data.frame(Masternew), "Master.xlsx", col.names = T, row.names = F, sheetName = MasterName )
 }
 
