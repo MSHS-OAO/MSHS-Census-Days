@@ -65,7 +65,7 @@ data_upload_MSBIB <- data_upload %>%
   as.data.frame() %>%
   filter(Census.Date >= pp.start,
          Census.Date <= pp.end,
-         Site == 'BIB') %>%
+         Site == 'BIB' | Site == 'BIPTR') %>%
   mutate(Corp = 729805,
          Site = '630571',
          Start.Date = format(Start.Date, "%m/%d/%Y"),
