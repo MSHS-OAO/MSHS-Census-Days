@@ -6,11 +6,11 @@ library(tidyverse)
 library(xlsx)
 
 # User Input --------------------------------------------------------------
-warning("Update Pay Period Start and End Dates Needed:")
-Sys.sleep(2)
 pp.start <- as.Date('2020-06-21') # start date of first pay period needed
 pp.end <- as.Date('2020-08-01') # end date of the last pay period needed
+warning("Update Pay Periods Start and End Dates Needed:")
 cat(paste("Pay period starting on",format(pp.start, "%m/%d/%Y"), 'and ending on',format(pp.end, "%m/%d/%Y") ),fill = T)
+Sys.sleep(2)
 
 # Import Dictionaries -------------------------------------------------------
 map_CC_Vol <-  read.xlsx('BIBSLW_Volume ID_Cost Center_ Mapping.xlsx', sheetIndex = 1)
@@ -28,11 +28,13 @@ if(range(data_census$Census.Date)[2] > range(dict_PC$End.Date)[2]){stop("Update 
 # Pre Processing ----------------------------------------------------------
 data_census <- data_census %>%
   mutate(Site = as.character(Site),
-        Nursing.Station.Code = as.character(Nursing.Station.Code))
+         Nursing.Station.Code = as.character(Nursing.Station.Code),
+         Row.Num = 1:nrow(data_census))
 map_CC_Vol <- map_CC_Vol %>%
-  mutate(Site = as.character(Site),
-         Nursing.Station.Code = as.character(Nursing.Station.Code))
-data_upload <- left_join(data_census, drop_na(subset(map_CC_Vol, select = c('Site', 'Nursing.Station.Code', 'CostCenter', 'VolumeID')))) #issue this is adding rows
+  select (Site, Nursing.Station.Code, CostCenter, VolumeID) %>%
+  mutate(Nursing.Station.Code = as.character(Nursing.Station.Code)) %>%
+  drop_na()
+data_upload <- left_join(data_census, map_CC_Vol)
 data_upload <- left_join(data_upload, dict_PC)
 
 # MSW Upload File ---------------------------------------------------------
