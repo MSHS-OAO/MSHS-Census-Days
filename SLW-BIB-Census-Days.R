@@ -19,7 +19,17 @@ colnames(dict_PC)[1] <- 'Census.Date'
 dict_PC <- dict_PC %>% drop_na()
 
 # Import Data -------------------------------------------------------------
-data_census <- read.xlsx(choose.files(caption = "Select Census File", multi = F, default= 'J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/Multisite Volumes/Census Days/Source Data'), sheetIndex = 1)
+import_recent_file <- function(folder.path) {
+  File.Name <- list.files(path = folder.path,pattern = 'xlsx$',full.names = F)
+  File.Path <- list.files(path = folder.path,pattern = 'xlsx$',full.names = T)
+  File.Date <- as.Date(sapply(File.Name, function(x) substr(x,nchar(x)-12, nchar(x)-5)),format = '%m.%d.%y')
+  File.Table <- data.table::data.table(File.Name, File.Date, File.Path)  %>%
+    arrange(desc(File.Date))
+  data_recent <- read.xlsx(file = File.Table$File.Path[1], sheetIndex = 1)
+  return(data_recent)
+}
+data_census <- import_recent_file(paste0(dir, '/Source Data'))
+#data_census <- read.xlsx(choose.files(caption = "Select Census File", multi = F, default= 'J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/Multisite Volumes/Census Days/Source Data'), sheetIndex = 1)
 
 # QC ----------------------------------------------------------------------
 if(pp.end > range(data_census$Census.Date)[2]){stop('Data Missing from Census for Pay Periods Needed')}
