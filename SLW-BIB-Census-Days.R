@@ -10,6 +10,7 @@ warning("Update Pay Period Start and End Dates Needed:")
 Sys.sleep(2)
 pp.start <- as.Date('2020-06-21') # start date of first pay period needed
 pp.end <- as.Date('2020-08-01') # end date of the last pay period needed
+cat(paste("Pay period starting on",format(pp.start, "%m/%d/%Y"), 'and ending on',format(pp.end, "%m/%d/%Y") ),fill = T)
 
 # Import Dictionaries -------------------------------------------------------
 map_CC_Vol <-  read.xlsx('BIBSLW_Volume ID_Cost Center_ Mapping.xlsx', sheetIndex = 1)
