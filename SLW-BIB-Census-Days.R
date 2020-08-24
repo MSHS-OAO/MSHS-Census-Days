@@ -26,6 +26,12 @@ if(pp.end > range(data_census$Census.Date)[2]){stop('Data Missing from Census fo
 if(range(data_census$Census.Date)[2] > range(dict_PC$End.Date)[2]){stop("Update Pay Cycle Dictionary")}
 
 # Pre Processing ----------------------------------------------------------
+data_census <- data_census %>%
+  mutate(Site = as.character(Site),
+        Nursing.Station.Code = as.character(Nursing.Station.Code))
+map_CC_Vol <- map_CC_Vol %>%
+  mutate(Site = as.character(Site),
+         Nursing.Station.Code = as.character(Nursing.Station.Code))
 data_upload <- left_join(data_census, drop_na(subset(map_CC_Vol, select = c('Site', 'Nursing.Station.Code', 'CostCenter', 'VolumeID')))) #issue this is adding rows
 data_upload <- left_join(data_upload, dict_PC)
 
