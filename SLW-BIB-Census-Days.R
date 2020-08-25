@@ -38,8 +38,7 @@ if(range(data_census$Census.Date)[2] > range(dict_PC$End.Date)[2]){stop("Update 
 # Pre Processing ----------------------------------------------------------
 data_census <- data_census %>%
   mutate(Site = as.character(Site),
-         Nursing.Station.Code = as.character(Nursing.Station.Code),
-         Row.Num = 1:nrow(data_census))
+         Nursing.Station.Code = as.character(Nursing.Station.Code))
 map_CC_Vol <- map_CC_Vol %>%
   select (Site, Nursing.Station.Code, CostCenter, VolumeID) %>%
   mutate(Nursing.Station.Code = as.character(Nursing.Station.Code)) %>%
@@ -47,53 +46,27 @@ map_CC_Vol <- map_CC_Vol %>%
 data_upload <- left_join(data_census, map_CC_Vol)
 data_upload <- left_join(data_upload, dict_PC)
 
-# MSW Upload File ---------------------------------------------------------
-data_upload_MSW <- data_upload %>%
-  as.data.frame() %>%
-  filter(Census.Date >= pp.start,
-         Census.Date <= pp.end,
-         Site == 'RVT') %>%
-  mutate(Corp = 729805,
-         Site = 'NY2162',
-         Start.Date = format(Start.Date, "%m/%d/%Y"),
-         End.Date = format(End.Date, "%m/%d/%Y")) %>%
-  select(Corp, Site, CostCenter, Start.Date, End.Date, VolumeID, Census.Day) %>%
-  group_by(Corp, Site, CostCenter, Start.Date, End.Date, VolumeID) %>%
-  summarise(Volume = sum(Census.Day, na.rm=T)) %>%
-  mutate(Budget = 0)
-data_upload_MSW <- na.omit(data_upload_MSW)
-
-# MSM Upload File ---------------------------------------------------------
-data_upload_MSM <- data_upload %>%
-  as.data.frame() %>%
-  filter(Census.Date >= pp.start,
-         Census.Date <= pp.end,
-         Site == 'STL') %>%
-  mutate(Corp = 729805,
-         Site = 'NY2163',
-         Start.Date = format(Start.Date, "%m/%d/%Y"),
-         End.Date = format(End.Date, "%m/%d/%Y")) %>%
-  select(Corp, Site, CostCenter, Start.Date, End.Date, VolumeID, Census.Day) %>%
-  group_by(Corp, Site, CostCenter, Start.Date, End.Date, VolumeID) %>%
-  summarise(Volume = sum(Census.Day, na.rm=T)) %>%
-  mutate(Budget = 0)
-data_upload_MSM <- na.omit(data_upload_MSM)
-
-# MSBIB Upload File ---------------------------------------------------------
-data_upload_MSBIB <- data_upload %>%
-  as.data.frame() %>%
-  filter(Census.Date >= pp.start,
-         Census.Date <= pp.end,
-         Site == 'BIB' | Site == 'BIPTR') %>%
-  mutate(Corp = 729805,
-         Site = '630571',
-         Start.Date = format(Start.Date, "%m/%d/%Y"),
-         End.Date = format(End.Date, "%m/%d/%Y")) %>%
-  select(Corp, Site, CostCenter, Start.Date, End.Date, VolumeID, Census.Day) %>%
-  group_by(Corp, Site, CostCenter, Start.Date, End.Date, VolumeID) %>%
-  summarise(Volume = sum(Census.Day, na.rm=T)) %>%
-  mutate(Budget = 0)
-data_upload_MSBIB <- na.omit(data_upload_MSBIB)
+# Upload File Creation ----------------------------------------------------
+upload_file <- function(site.census, site.premier){
+  upload <- data_upload %>%
+    as.data.frame() %>%
+    filter(Census.Date >= pp.start,
+           Census.Date <= pp.end,
+           Site == site.census) %>%
+    mutate(Corp = 729805,
+           Site = site.premier,
+           Start.Date = format(Start.Date, "%m/%d/%Y"),
+           End.Date = format(End.Date, "%m/%d/%Y")) %>%
+    select(Corp, Site, CostCenter, Start.Date, End.Date, VolumeID, Census.Day) %>%
+    group_by(Corp, Site, CostCenter, Start.Date, End.Date, VolumeID) %>%
+    summarise(Volume = sum(Census.Day, na.rm=T)) %>%
+    mutate(Budget = 0)
+  upload <- na.omit(upload)
+  return(upload)
+}
+data_upload_MSW <- upload_file('RVT', 'NY2162')
+data_upload_MSM <- upload_file('STL', 'NY2163')
+data_upload_MSBIB <- full_join(upload_file('BIB','630571'), upload_file('BIPTR','630571'))
 
 # Export Files ------------------------------------------------------------
 setwd(paste0(dir, '/Upload Files'))
