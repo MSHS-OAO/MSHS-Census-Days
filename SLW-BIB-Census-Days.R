@@ -66,7 +66,7 @@ upload_file <- function(site.census, site.premier){
 }
 data_upload_MSW <- upload_file('RVT', 'NY2162')
 data_upload_MSM <- upload_file('STL', 'NY2163')
-data_upload_MSBIB <- full_join(upload_file('BIB','630571'), upload_file('BIPTR','630571'))
+data_upload_MSBIB <- rbind(upload_file('BIB','630571'), upload_file('BIPTR','630571'))
 
 # Export Files ------------------------------------------------------------
 setwd(paste0(dir, '/Upload Files'))
