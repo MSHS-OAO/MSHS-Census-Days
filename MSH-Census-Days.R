@@ -1,13 +1,15 @@
 #--------------------Census Days For PP
+library(dplyr)
+library(lubridate)
+
 #-----Reads and manipulates raw file to be ready to append master file
 rawfile <- function(){
   #Read raw file
   raw <- readxl::read_excel(file.choose())
-  #Only take necessary columns
-  raw1 <- data.frame(Unit= raw$UNIT,UnitDescription=raw$`UNIT DESCRIPTION`,
-                     MonthYear=raw$`MONTH YEAR`,Date=raw$DATE,Census=raw$`Census for the Day`)
-  #Filter out blank or zero rows
-  raw2 <- subset(raw1,!is.na(raw1$Census))
+  #Only take necessary columns and remove blank census rows
+  raw2 <- raw %>% select(Unit=UNIT,UnitDescription=`UNIT DESCRIPTION`,
+                         MonthYear=`MONTH YEAR`,Date=DATE,Census=`Census for the Day`) %>%
+    filter(!is.na(Census))
   #Check how many days are in the file. Stop if not equal to 14
   filedays <- length(unique(raw2$Date))
   raw2<<-raw2
@@ -21,7 +23,6 @@ master <- function(){
   setwd("J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/MSH Data/Inpatient Census Days/Calculation Worksheets")
   #upload current master file
   Masterold <- readxl::read_excel("Master.xlsx", col_types = c("text", "text", "date", "date", "numeric"))
-  library(lubridate)
   #adjust the monthyear format of the raw table to prepare for append
   raw2$MonthYear <- dmy(paste0("19/",raw2$MonthYear))
   #put monthyear in same format as master table
@@ -61,12 +62,19 @@ VolumeID <- function(){
 
 #-----Create census upload for PP
 Export <- function(){
+  setwd("J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/MSH Data/Inpatient Census Days/Calculation Worksheets")
+  #upload volume ID crosswalk with every department and their respective volumeID
+  Crosswalk_Oracle <- read.csv("VolumeID_Oracle.csv", check.names = F, colClasses = c(rep("factor",7)))
+  #bring in Oracle CC
+  PP3 <- left_join(PP2,Crosswalk_Oracle) %>%
+    distinct()
   #Create upload format
   ExportMax <- paste0(substr(MaxDate,start=6,stop=7),"/",substr(MaxDate,start=9,stop=10),"/",substr(MaxDate,start=1,stop=4))
   ExportMin <- paste0(substr(MinDate,start=6,stop=7),"/",substr(MinDate,start=9,stop=10),"/",substr(MinDate,start=1,stop=4))
-  upload <<- data.frame(partner="729805", hospital="NY0014", CC=PP2$`Cost Center`,start=ExportMin, 
-                        end=ExportMax, volumeID=paste0(PP2$`Cost Center`,"1"), Census=PP2$Census, budget="0",
-                        Unit = PPTrend_new$Department, Volume = "Patient Days")
+  upload <<- PP3 %>% select(`Oracle CC`,`Oracle Vol`,Census) %>%
+    mutate(partner="729805",hospital="NY0014",budget="0",start=ExportMin,end=ExportMax) %>%
+    select(partner,hospital,`Oracle CC`,start,end,`Oracle Vol`,Census,budget) %>%
+    distinct()
 }
 
 Save <- function(){
