@@ -1,20 +1,20 @@
 dir <- 'J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/Multisite Volumes/Census Days'
-setwd(dir)
+#setwd(dir)
 
 # Load Libraries ----------------------------------------------------------
 library(tidyverse)
 library(xlsx)
 
 # User Input --------------------------------------------------------------
-pp.start <- as.Date('2020-06-21') # start date of first pay period needed
-pp.end <- as.Date('2020-08-01') # end date of the last pay period needed
+pp.start <- as.Date('2020-08-02') # start date of first pay period needed
+pp.end <- as.Date('2020-08-29') # end date of the last pay period needed
 warning("Update Pay Periods Start and End Dates Needed:")
 cat(paste("Pay period starting on",format(pp.start, "%m/%d/%Y"), 'and ending on',format(pp.end, "%m/%d/%Y") ),fill = T)
 Sys.sleep(2)
 
 # Import Dictionaries -------------------------------------------------------
-map_CC_Vol <-  read.xlsx('BIBSLW_Volume ID_Cost Center_ Mapping.xlsx', sheetIndex = 1)
-dict_PC <- read.xlsx('Pay Cycle Dictionaries.xlsx', sheetIndex = 1)
+map_CC_Vol <-  read.xlsx(paste0(dir, '/BIBSLW_Volume ID_Cost Center_ Mapping.xlsx'), sheetIndex = 1)
+dict_PC <- read.xlsx(paste0(dir,'/Pay Cycle Dictionaries.xlsx'), sheetIndex = 1)
 colnames(dict_PC)[1] <- 'Census.Date'
 dict_PC <- dict_PC %>% drop_na()
 
