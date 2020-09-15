@@ -20,12 +20,15 @@ dict_PC <- dict_PC %>% drop_na()
 
 # Import Data -------------------------------------------------------------
 import_recent_file <- function(folder.path) {
+  #Importing File information from Folder
   File.Name <- list.files(path = folder.path,pattern = 'xlsx$',full.names = F)
   File.Path <- list.files(path = folder.path,pattern = 'xlsx$',full.names = T)
   File.Date <- as.Date(sapply(File.Name, function(x) substr(x,nchar(x)-12, nchar(x)-5)),format = '%m.%d.%y')
-  File.Table <- data.table::data.table(File.Name, File.Date, File.Path)  %>%
+  File.Table <- data.table::data.table(File.Name, File.Date, File.Path) %>%
     arrange(desc(File.Date))
+  #Importing Data 
   data_recent <- read.xlsx(file = File.Table$File.Path[1], sheetIndex = 1)
+  data_recent <- data_recent %>% mutate(Source = File.Table$File.Path[1]) #File Source Column for Reference
   return(data_recent)
 }
 data_census <- import_recent_file(paste0(dir, '/Source Data'))
@@ -69,7 +72,7 @@ data_upload_MSM <- upload_file('STL', 'NY2163')
 data_upload_MSBIB <- rbind(upload_file('BIB','630571'), upload_file('BIPTR','630571'))
 
 # Export Files ------------------------------------------------------------
-setwd(paste0(dir, '/Upload Files'))
-write.table(data_upload_MSW, file = paste0("MSW_Census Days_", format(pp.start,"%d%b%y"), " to ", format(pp.end, "%d%b%y"), ".csv"), sep = ',' , row.names = F,col.names = F)
-write.table(data_upload_MSM, file = paste0("MSM_Census Days_", format(pp.start,"%d%b%y"), " to ", format(pp.end, "%d%b%y"), ".csv"), sep = ',', row.names = F, col.names = F)
-write.table(data_upload_MSBIB, file = paste0("MSBIB_Census Days_", format(pp.start,"%d%b%y"), " to ", format(pp.end, "%d%b%y"), ".csv"), sep = ',', row.names = F, col.names = F)
+#setwd(paste0(dir, '/Upload Files'))
+write.table(data_upload_MSW, file = paste0(dir,'/Upload Files', "/MSW_Census Days_", format(pp.start,"%d%b%y"), " to ", format(pp.end, "%d%b%y"), ".csv"), sep = ',' , row.names = F,col.names = F)
+write.table(data_upload_MSM, file = paste0(dir,'/Upload Files',"/MSM_Census Days_", format(pp.start,"%d%b%y"), " to ", format(pp.end, "%d%b%y"), ".csv"), sep = ',', row.names = F, col.names = F)
+write.table(data_upload_MSBIB, file = paste0(dir,'/Upload Files',"/MSBIB_Census Days_", format(pp.start,"%d%b%y"), " to ", format(pp.end, "%d%b%y"), ".csv"), sep = ',', row.names = F, col.names = F)
