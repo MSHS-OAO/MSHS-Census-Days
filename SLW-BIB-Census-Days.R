@@ -24,7 +24,7 @@ import_recent_file <- function(folder.path) {
   File.Name <- list.files(path = folder.path,pattern = 'xlsx$',full.names = F)
   File.Path <- list.files(path = folder.path,pattern = 'xlsx$',full.names = T)
   File.Date <- as.Date(sapply(File.Name, function(x) substr(x,nchar(x)-12, nchar(x)-5)),format = '%m.%d.%y')
-  File.Table <- data.table::data.table(File.Name, File.Date, File.Path) %>%
+  File.Table <<- data.table::data.table(File.Name, File.Date, File.Path) %>%
     arrange(desc(File.Date))
   #Importing Data 
   data_recent <- read.xlsx(file = File.Table$File.Path[1], sheetIndex = 1)
@@ -33,6 +33,13 @@ import_recent_file <- function(folder.path) {
 }
 data_census <- import_recent_file(paste0(dir, '/Source Data'))
 #data_census <- read.xlsx(choose.files(caption = "Select Census File", multi = F, default= 'J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/Multisite Volumes/Census Days/Source Data'), sheetIndex = 1)
+#if(format(pp.start, "%Y") != format(pp.end, "%Y")){
+#  File.Table2 <- File.Table %>% mutate(File.Year = format(File.Date,'%Y'))
+#  File.Table2 <- File.Table2[nrow(File.Table2)-sum(File.Table2$File.Year == format(pp.start,"%Y")),]
+ # data_census2  <- read.xlsx(file = File.Table2$File.Path, sheetIndex = 1)
+ # data_census2 <- data_census2 %>% mutate(Soruce = File.Table2$File.Path)
+ # data_census <- rbind(data_census, data_census2) %>% distinct()
+ # }
 
 # QC ----------------------------------------------------------------------
 if(pp.end > range(data_census$Census.Date)[2]){stop('Data Missing from Census for Pay Periods Needed')}
@@ -50,7 +57,7 @@ data_upload <- left_join(data_census, map_CC_Vol)
 data_upload <- left_join(data_upload, dict_PC)
 
 # Upload File Creation ----------------------------------------------------
-upload_file <- function(site.census, site.premier){
+upload_file <- function(site.census, site.premier, map_cc){
   upload <- data_upload %>%
     as.data.frame() %>%
     filter(Census.Date >= pp.start,
@@ -65,11 +72,22 @@ upload_file <- function(site.census, site.premier){
     summarise(Volume = sum(Census.Day, na.rm=T)) %>%
     mutate(Budget = 0)
   upload <- na.omit(upload)
+  #Adding Zeros
+  payperiods <- upload %>% ungroup() %>% select(Start.Date, End.Date) %>% distinct()
+  map_cc <- map_cc %>% filter(Site == site.census) %>% select(CostCenter,VolumeID) %>% distinct()
+  map_cc <- merge(map_cc, payperiods)
+  map_cc <- map_cc %>% mutate(Concat = paste0(VolumeID, Start.Date))
+  upload <- upload %>% mutate(Concat = paste0(VolumeID, Start.Date))
+  zero_rows <- map_cc[!(map_cc$Concat %in% upload$Concat),]
+  zero_rows <- zero_rows %>% 
+    mutate(Corp = 729805,Site = site.premier,Volume = 0,Budget = 0)
+  upload <- plyr::rbind.fill(upload, zero_rows)
+  upload$Concat <- NULL
   return(upload)
 }
-data_upload_MSW <- upload_file('RVT', 'NY2162')
-data_upload_MSM <- upload_file('STL', 'NY2163')
-data_upload_MSBIB <- rbind(upload_file('BIB','630571'), upload_file('BIPTR','630571'))
+data_upload_MSW <- upload_file('RVT', 'NY2162', map_CC_Vol)
+data_upload_MSM <- upload_file('STL', 'NY2163', map_CC_Vol)
+data_upload_MSBIB <- rbind(upload_file('BIB','630571', map_CC_Vol), upload_file('BIPTR','630571', map_CC_Vol))
 
 # Export Files ------------------------------------------------------------
 #setwd(paste0(dir, '/Upload Files'))
