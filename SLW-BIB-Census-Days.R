@@ -94,3 +94,17 @@ data_upload_MSBIB <- rbind(upload_file('BIB','630571', map_CC_Vol), upload_file(
 write.table(data_upload_MSW, file = paste0(dir,'/Upload Files', "/MSW_Census Days_", format(pp.start,"%d%b%y"), " to ", format(pp.end, "%d%b%y"), ".csv"), sep = ',' , row.names = F,col.names = F)
 write.table(data_upload_MSM, file = paste0(dir,'/Upload Files',"/MSM_Census Days_", format(pp.start,"%d%b%y"), " to ", format(pp.end, "%d%b%y"), ".csv"), sep = ',', row.names = F, col.names = F)
 write.table(data_upload_MSBIB, file = paste0(dir,'/Upload Files',"/MSBIB_Census Days_", format(pp.start,"%d%b%y"), " to ", format(pp.end, "%d%b%y"), ".csv"), sep = ',', row.names = F, col.names = F)
+
+# Generating Quality Chart ------------------------------------------------
+quality_chart <- function(data, site.census) {
+  data_chart <- data_upload %>% ungroup()  %>% filter(Site == site.census) %>%
+    select(Nursing.Station.Code, CostCenter, End.Date,Census.Day) %>%
+    mutate(End.Date = format(End.Date, "%m.%d.%y")) %>%
+    pivot_wider(names_from = End.Date, values_from = Census.Day, values_fn = list(Census.Day = sum))
+}
+chart_master <- lapply(as.list(unique(data_upload$Site)), function(x) quality_chart(data_upload, x))
+
+# Export Quality Charts ---------------------------------------------------
+write.xlsx2(chart_master[1],file = paste0(dir, '/Quality Chart_',format(Sys.time(), '%d%b%y'),'.xlsx'), row.names = F, sheetName = unique(data_upload$Site)[1])
+sapply(2:length(chart_master),function(x) write.xlsx2(chart_master[x], file =paste0(dir, '/Quality Chart_',format(Sys.time(), '%d%b%y'),'.xlsx'), row.names = F, sheetName = unique(data_upload$Site)[x],append = T))
+
