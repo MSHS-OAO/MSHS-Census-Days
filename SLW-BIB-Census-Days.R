@@ -16,8 +16,8 @@ Sys.sleep(2)
 #Names of sites in census files
 site_MSW <- c('RVT', 'MSW')
 site_MSM <- c('STL', 'MSM')
-site_MSBI <- c('BIB', 'MSBITR')
-site_MSB <- c('BIPTR', 'MSB')
+site_MSBI <- c('BIPTR', 'MSBITR')
+site_MSB <- c('BIB', 'MSB')
 
 # Import Dictionaries -------------------------------------------------------
 map_CC_Vol <-  read.xlsx(paste0(dir, '/BIBSLW_Volume ID_Cost Center_ Mapping.xlsx'), sheetIndex = 1)
