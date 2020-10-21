@@ -6,8 +6,8 @@ library(tidyverse)
 library(xlsx)
 
 # User Input --------------------------------------------------------------
-pp.start <- as.Date('2020-08-02') # start date of first pay period needed
-pp.end <- as.Date('2020-08-29') # end date of the last pay period needed
+pp.start <- as.Date('2020-08-30') # start date of first pay period needed
+pp.end <- as.Date('2020-09-26') # end date of the last pay period needed
 warning("Update Pay Periods Start and End Dates Needed:")
 cat(paste("Pay period starting on",format(pp.start, "%m/%d/%Y"), 'and ending on',format(pp.end, "%m/%d/%Y") ),fill = T)
 Sys.sleep(2)
@@ -55,6 +55,9 @@ map_CC_Vol <- map_CC_Vol %>%
   drop_na()
 data_upload <- left_join(data_census, map_CC_Vol)
 data_upload <- left_join(data_upload, dict_PC)
+
+# QC --------------------------------------------------------------------
+if(nrow(data_census) != nrow(data_upload)){stop('Check Dictionaries for Duplicates')} #checking to see if vlookups are duplicating rows
 
 # Upload File Creation ----------------------------------------------------
 upload_file <- function(site.census, site.premier, map_cc){
