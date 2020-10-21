@@ -12,6 +12,13 @@ warning("Update Pay Periods Start and End Dates Needed:")
 cat(paste("Pay period starting on",format(pp.start, "%m/%d/%Y"), 'and ending on',format(pp.end, "%m/%d/%Y") ),fill = T)
 Sys.sleep(2)
 
+# Constants ---------------------------------------------------------------
+#Names of sites in census files
+site_MSW <- c('RVT', 'MSW')
+site_MSM <- c('STL', 'MSM')
+site_MSBI <- c('BIB', 'MSBITR')
+site_MSB <- c('BIPTR', 'MSB')
+
 # Import Dictionaries -------------------------------------------------------
 map_CC_Vol <-  read.xlsx(paste0(dir, '/BIBSLW_Volume ID_Cost Center_ Mapping.xlsx'), sheetIndex = 1)
 dict_PC <- read.xlsx(paste0(dir,'/Pay Cycle Dictionaries.xlsx'), sheetIndex = 1)
@@ -65,7 +72,7 @@ upload_file <- function(site.census, site.premier, map_cc){
     as.data.frame() %>%
     filter(Census.Date >= pp.start,
            Census.Date <= pp.end,
-           Site == site.census) %>%
+           Site %in% site.census) %>%
     mutate(Corp = 729805,
            Site = site.premier,
            Start.Date = format(Start.Date, "%m/%d/%Y"),
@@ -77,7 +84,7 @@ upload_file <- function(site.census, site.premier, map_cc){
   upload <- na.omit(upload)
   #Adding Zeros
   payperiods <- upload %>% ungroup() %>% select(Start.Date, End.Date) %>% distinct()
-  map_cc <- map_cc %>% filter(Site == site.census) %>% select(CostCenter,VolumeID) %>% distinct()
+  map_cc <- map_cc %>% filter(Site %in% site.census) %>% select(CostCenter,VolumeID) %>% distinct()
   map_cc <- merge(map_cc, payperiods)
   map_cc <- map_cc %>% mutate(Concat = paste0(VolumeID, Start.Date))
   upload <- upload %>% mutate(Concat = paste0(VolumeID, Start.Date))
@@ -88,9 +95,9 @@ upload_file <- function(site.census, site.premier, map_cc){
   upload$Concat <- NULL
   return(upload)
 }
-data_upload_MSW <- upload_file('RVT', 'NY2162', map_CC_Vol)
-data_upload_MSM <- upload_file('STL', 'NY2163', map_CC_Vol)
-data_upload_MSBIB <- rbind(upload_file('BIB','630571', map_CC_Vol), upload_file('BIPTR','630571', map_CC_Vol))
+data_upload_MSW <- upload_file(site_MSW, 'NY2162', map_CC_Vol)
+data_upload_MSM <- upload_file(site_MSM, 'NY2163', map_CC_Vol)
+data_upload_MSBIB <- rbind(upload_file(site_MSBI,'630571', map_CC_Vol), upload_file(site_MSB,'630571', map_CC_Vol))
 
 # Export Files ------------------------------------------------------------
 #setwd(paste0(dir, '/Upload Files'))
