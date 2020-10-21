@@ -60,6 +60,13 @@ map_CC_Vol <- map_CC_Vol %>%
   select (Site, Nursing.Station.Code, CostCenter, VolumeID) %>%
   mutate(Nursing.Station.Code = as.character(Nursing.Station.Code)) %>%
   drop_na()
+if(any(!unique(map_CC_Vol$Site) %in% unique(data_census$Site))){
+  site.Table <- as.data.frame(rbind(site_MSM, site_MSW, site_MSBI, site_MSB))
+  colnames(site.Table) <- c('Site', 'Site.New')
+  site.Table <- site.Table %>% mutate(Site = as.character(Site))
+  map_CC_Vol <- left_join(map_CC_Vol, site.Table)
+  map_CC_Vol <- map_CC_Vol %>% mutate(Site = NULL) %>% rename(Site = Site.New)
+} #depending on old or new names used for sites update dictionary
 data_upload <- left_join(data_census, map_CC_Vol)
 data_upload <- left_join(data_upload, dict_PC)
 
