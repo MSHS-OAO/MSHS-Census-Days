@@ -53,7 +53,8 @@ VolumeID <- function(){
   #Read current while maintaining CC and VolumeID
   PPTrend <- read.csv(file="PP_Trend.csv", check.names = F, colClasses = c(rep("factor",length(PP2))))
   #Append current PP census to PP Trend
-  PPTrend_new <- cbind(PPTrend,PP2$Census)
+  PPTrend_new <- left_join(PPTrend,PP2,by=c("CC" = "Cost Center"))
+  #PPTrend_new <- cbind(PPTrend,PP2$Census)
   #adjust column name to the end date of this payperiod
   colnames(PPTrend_new)[length(PPTrend_new)] <- as.character(paste0(substr(MaxDate,start=6,stop=7),"/",substr(MaxDate,start=9,stop=10),"/",substr(MaxDate,start=1,stop=4)))
   #Display PP Trend
