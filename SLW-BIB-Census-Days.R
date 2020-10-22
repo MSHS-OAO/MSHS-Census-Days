@@ -64,7 +64,7 @@ if(pp.start < range(data_census$Census.Date)[1]){
     #If the sites match combine the 1st and 2nd census file
     data_census <- rbind(data_census, data_census2) %>% mutate(Source = NULL) %>% distinct()
   }
-}
+}#If payperiod crosses a year import 2nd census file from previous year
 if(range(data_census$Census.Date)[2] > range(dict_PC$End.Date)[2]){stop("Update Pay Cycle Dictionary")}
 
 # Pre Processing ----------------------------------------------------------
