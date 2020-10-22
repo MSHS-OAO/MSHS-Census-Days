@@ -1,5 +1,4 @@
 dir <- 'J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/Multisite Volumes/Census Days'
-#setwd(dir)
 
 # Load Libraries ----------------------------------------------------------
 library(tidyverse)
@@ -13,7 +12,7 @@ cat(paste("Pay period starting on",format(pp.start, "%m/%d/%Y"), 'and ending on'
 Sys.sleep(2)
 
 # Constants ---------------------------------------------------------------
-#Names of sites in census files
+#Names of sites in census files (old, new)
 site_MSW <- c('RVT', 'MSW')
 site_MSM <- c('STL', 'MSM')
 site_MSBI <- c('BIPTR', 'MSBITR')
@@ -26,7 +25,7 @@ colnames(dict_PC)[1] <- 'Census.Date'
 dict_PC <- dict_PC %>% drop_na()
 
 # Import Data -------------------------------------------------------------
-import_recent_file <- function(folder.path) {
+import_recent_file <- function(folder.path, place) {
   #Importing File information from Folder
   File.Name <- list.files(path = folder.path,pattern = 'xlsx$',full.names = F)
   File.Path <- list.files(path = folder.path,pattern = 'xlsx$',full.names = T)
@@ -34,11 +33,11 @@ import_recent_file <- function(folder.path) {
   File.Table <<- data.table::data.table(File.Name, File.Date, File.Path) %>%
     arrange(desc(File.Date))
   #Importing Data 
-  data_recent <- read.xlsx(file = File.Table$File.Path[1], sheetIndex = 1)
-  data_recent <- data_recent %>% mutate(Source = File.Table$File.Path[1]) #File Source Column for Reference
+  data_recent <- read.xlsx(file = File.Table$File.Path[place], sheetIndex = 1)
+  data_recent <- data_recent %>% mutate(Source = File.Table$File.Path[place]) #File Source Column for Reference
   return(data_recent)
 }
-data_census <- import_recent_file(paste0(dir, '/Source Data'))
+data_census <- import_recent_file(paste0(dir, '/Source Data'), 1)
 #data_census <- read.xlsx(choose.files(caption = "Select Census File", multi = F, default= 'J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/Multisite Volumes/Census Days/Source Data'), sheetIndex = 1)
 #if(format(pp.start, "%Y") != format(pp.end, "%Y")){
 #  File.Table2 <- File.Table %>% mutate(File.Year = format(File.Date,'%Y'))
@@ -50,6 +49,22 @@ data_census <- import_recent_file(paste0(dir, '/Source Data'))
 
 # QC ----------------------------------------------------------------------
 if(pp.end > range(data_census$Census.Date)[2]){stop('Data Missing from Census for Pay Periods Needed')}
+if(pp.start < range(data_census$Census.Date)[1]){
+  data_census2 <- import_recent_file(paste0(dir, '/Source Data'), 2)
+  if(any(!unique(data_census$Site) %in% unique(data_census2$Site))){
+    #If the site names are not the same update the 2nd census file to the new names
+    site.Table <- as.data.frame(rbind(site_MSM, site_MSW, site_MSBI, site_MSB))
+    colnames(site.Table) <- c('Site', 'Site.New')
+    site.Table <- site.Table %>% mutate(Site = as.character(Site))
+    data_census2 <- left_join(data_census2, site.Table)
+    data_census2 <- data_census2 %>% mutate(Site = NULL) %>% rename(Site = Site.New)
+    #Combine the 1st and 2nd census file
+    data_census <- rbind(data_census, data_census2) %>% mutate(Source = NULL) %>% distinct()
+  } else{
+    #If the sites match combine the 1st and 2nd census file
+    data_census <- rbind(data_census, data_census2) %>% mutate(Source = NULL) %>% distinct()
+  }
+}
 if(range(data_census$Census.Date)[2] > range(dict_PC$End.Date)[2]){stop("Update Pay Cycle Dictionary")}
 
 # Pre Processing ----------------------------------------------------------
