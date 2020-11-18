@@ -5,8 +5,8 @@ library(tidyverse)
 library(xlsx)
 
 # User Input --------------------------------------------------------------
-pp.start <- as.Date('2020-08-30') # start date of first pay period needed
-pp.end <- as.Date('2020-09-26') # end date of the last pay period needed
+pp.start <- as.Date('2020-09-27') # start date of first pay period needed
+pp.end <- as.Date('2020-10-24') # end date of the last pay period needed
 warning("Update Pay Periods Start and End Dates Needed:")
 cat(paste("Pay period starting on",format(pp.start, "%m/%d/%Y"), 'and ending on',format(pp.end, "%m/%d/%Y") ),fill = T)
 Sys.sleep(2)
