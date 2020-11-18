@@ -15,7 +15,8 @@ Sys.sleep(2)
 #Names of sites in census files (old, new)
 site_MSW <- c('RVT', 'MSW')
 site_MSM <- c('STL', 'MSM')
-site_MSBI <- c('BIPTR', 'MSBITR')
+#site_MSBI <- c('BIPTR', 'MSBITR') #MSBITR was only used for 1 month in Oct 2020
+site_MSBI <- c('BIPTR', 'MSBI') 
 site_MSB <- c('BIB', 'MSB')
 
 # Import Dictionaries -------------------------------------------------------
