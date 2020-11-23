@@ -34,9 +34,16 @@ census_vol <- left_join(census,volID,by=c("DepID"="UNIT")) %>%
 #------------master
 #make sure to check census_vol does not overlap with Master.RDS
 master_old <- readRDS("J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/MSH Data/Inpatient Census Days/New Calculation Worksheets/Master.RDS")
-master_new <- rbind(master_old,census_vol)
-saveRDS(master_new,"J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/MSH Data/Inpatient Census Days/New Calculation Worksheets/Master.RDS")
-#make PP trend
+if(max(master_old$Date) < min(census_vol$Date)){
+  master_new <- rbind(master_old,census_vol)
+  saveRDS(master_new,"J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/MSH Data/Inpatient Census Days/New Calculation Worksheets/Master.RDS")
+}
+trend <- master_new %>% 
+  ungroup()%>%
+  group_by(Oracle,End.Date) %>%
+  summarise(Census = sum(Census, na.rm = T)) %>%
+  pivot_wider(id_cols = c(Oracle),names_from = End.Date,values_from = Census)
+
 
 #------------upload
 #user input to filter master on neccessary pay period
@@ -57,6 +64,6 @@ upload <- function(start,end){
   return(upload)
 }
 
-census_export <- upload(start = "05/24/2020",end = "09/26/2020")
-
+census_export <- upload(start = "09/27/2020",end = "10/24/2020")
+write.table(census_export,"J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/MSH Data/Inpatient Census Days/New Calculation Worksheets/Uploads/MSH_Census_27SEP2020 to 24OCT2020.csv",col.names = F,row.names = F,sep = ",")
 trend <- census_export %>% pivot_wider(id_cols = Oracle,names_from = End.Date,values_from = Census)
