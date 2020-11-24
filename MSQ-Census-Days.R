@@ -83,3 +83,6 @@ upload()
 trend()
 #review trend_new for any variance
 save()
+
+#remove variables
+rm(export,master_new,raw1,trend_new)
