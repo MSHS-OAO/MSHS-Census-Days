@@ -3,6 +3,7 @@ library(dplyr)
 library(tidyr)
 library(readxl)
 library(zoo)
+library(lubridate)
 
 #--------------raw
 raw <- function(){
@@ -52,7 +53,7 @@ master <- function(){
   #read master file
   master_old <- readRDS("J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/MSH Data/Inpatient Census Days/New Calculation Worksheets/Master.RDS")
   #check that max master is less than min of raw file
-  if(max(master_old$Date) < min(census_vol$Date)){
+  if(max(master_old$Date) < min(census_vol$Date) & nrow(census_vol[is.na(census_vol$End.Date),]) == 0){
     #bind raw file with old master
     master_new <- rbind(master_old,census_vol)
     #save new master
@@ -114,5 +115,5 @@ trend <- master()
 #Upload multiple files if necessary
 
 #start and end should be start and end of what you want to upload
-census_export <- upload(start = "10/25/2020",end = "11/21/2020")
+census_export <- upload(start = "11/22/2020",end = "01/02/2021")
 save()
