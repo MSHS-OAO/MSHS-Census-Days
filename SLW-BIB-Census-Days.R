@@ -5,19 +5,24 @@ library(tidyverse)
 library(xlsx)
 
 # User Input --------------------------------------------------------------
-pp.start <- as.Date('2020-09-27') # start date of first pay period needed
-pp.end <- as.Date('2020-10-24') # end date of the last pay period needed
-warning("Update Pay Periods Start and End Dates Needed:")
+pp.start <- as.Date('2020-11-22') # start date of first pay period needed
+pp.end <- as.Date('2021-01-02') # end date of the last pay period needed
+if(pp.end < pp.start){stop("End date before Start date")} # inital QC check on date range
+warning("Update Pay Periods Start and End Dates Needed:") #reminder to updated dates
 cat(paste("Pay period starting on",format(pp.start, "%m/%d/%Y"), 'and ending on',format(pp.end, "%m/%d/%Y") ),fill = T)
 Sys.sleep(2)
 
 # Constants ---------------------------------------------------------------
+#Current names of sites (order matters)
+site_names <- c("MSB", "MSBI", "MSM", "MSW")
+# Old site names (order matters, must match above)
+site_old_names <- list(c("BIB","MSB"), c("BIPTR","MSBITR","MSBI"),c("STL","MSM"), c("RVT","MSW"))
 #Names of sites in census files (old, new)
-site_MSW <- c('RVT', 'MSW')
-site_MSM <- c('STL', 'MSM')
+#site_MSW <- c('RVT', 'MSW')
+#site_MSM <- c('STL', 'MSM')
 #site_MSBI <- c('BIPTR', 'MSBITR') #MSBITR was only used for 1 month in Oct 2020
-site_MSBI <- c('BIPTR', 'MSBI') 
-site_MSB <- c('BIB', 'MSB')
+#site_MSBI <- c('BIPTR', 'MSBI') 
+#site_MSB <- c('BIB', 'MSB')
 
 # Import Dictionaries -------------------------------------------------------
 map_CC_Vol <-  read.xlsx(paste0(dir, '/BIBSLW_Volume ID_Cost Center_ Mapping.xlsx'), sheetIndex = 1)
@@ -39,34 +44,31 @@ import_recent_file <- function(folder.path, place) {
   return(data_recent)
 }
 data_census <- import_recent_file(paste0(dir, '/Source Data'), 1)
+#select which file you want instead of most recent file
 #data_census <- read.xlsx(choose.files(caption = "Select Census File", multi = F, default= 'J:/deans/Presidents/SixSigma/MSHS Productivity/Productivity/Volume - Data/Multisite Volumes/Census Days/Source Data'), sheetIndex = 1)
-#if(format(pp.start, "%Y") != format(pp.end, "%Y")){
-#  File.Table2 <- File.Table %>% mutate(File.Year = format(File.Date,'%Y'))
-#  File.Table2 <- File.Table2[nrow(File.Table2)-sum(File.Table2$File.Year == format(pp.start,"%Y")),]
- # data_census2  <- read.xlsx(file = File.Table2$File.Path, sheetIndex = 1)
- # data_census2 <- data_census2 %>% mutate(Soruce = File.Table2$File.Path)
- # data_census <- rbind(data_census, data_census2) %>% distinct()
- # }
 
 # QC ----------------------------------------------------------------------
-if(pp.end > range(data_census$Census.Date)[2]){stop('Data Missing from Census for Pay Periods Needed')}
-if(pp.start < range(data_census$Census.Date)[1]){
-  data_census2 <- import_recent_file(paste0(dir, '/Source Data'), 2)
-  if(any(!unique(data_census$Site) %in% unique(data_census2$Site))){
-    #If the site names are not the same update the 2nd census file to the new names
-    site.Table <- as.data.frame(rbind(site_MSM, site_MSW, site_MSBI, site_MSB))
-    colnames(site.Table) <- c('Site', 'Site.New')
-    site.Table <- site.Table %>% mutate(Site = as.character(Site))
-    data_census2 <- left_join(data_census2, site.Table)
-    data_census2 <- data_census2 %>% mutate(Site = NULL) %>% rename(Site = Site.New)
-    #Combine the 1st and 2nd census file
-    data_census <- rbind(data_census, data_census2) %>% mutate(Source = NULL) %>% distinct()
-  } else{
-    #If the sites match combine the 1st and 2nd census file
-    data_census <- rbind(data_census, data_census2) %>% mutate(Source = NULL) %>% distinct()
-  }
-}#If payperiod crosses a year import 2nd census file from previous year
+#Checking range of dates requested exists in the census file
+if(pp.end > range(data_census$Census.Date)[2] | pp.start <range(data_census$Census.Date)[1]){
+  if(format(pp.end, "%Y") > format(pp.start, "%Y") & pp.end > range(data_census$Census.Date)[2]){
+    #If the end date requested goes beyond the calendar year of the census file
+    warning(paste0("File only has calendar year to date data, end date will be changed to "),format(pp.start, "%Y"),"-12-31")
+    pp.end.new <- as.Date(paste0(format(pp.start, "%Y"),"-12-31"))
+  }else if(format(pp.start, "%Y") < format(pp.end, "%Y") & pp.start < range(data_census$Census.Date)[1]){
+    #If the start date requested is before the calendar year of the census file
+    warning(paste0("File only has calendar year to date data, start date will be changed to "),format(pp.end, "%Y"),"-01-01")
+    pp.start.new <- as.Date(paste0(format(pp.end, "%Y"),'-01-01'))
+  }else{#If date range requested is outside the range of the census file
+    stop('Data Missing from Census file for Pay Periods Needed. Please add most recent file to the source data folder.')
+  }}
+
+#Checking the pay cycle dictionary is up to date
 if(range(data_census$Census.Date)[2] > range(dict_PC$End.Date)[2]){stop("Update Pay Cycle Dictionary")}
+
+#Checking dates requested are payperiods
+if(!pp.start %in% dict_PC$Start.Date){
+  stop("Start date entered is not the start of a payperiod, please enter another start date")
+}else if(!pp.end %in% dict_PC$End.Date){stop("End date entered is not the end of a pay period, please enter another end date")}
 
 # Pre Processing ----------------------------------------------------------
 data_census <- data_census %>%
@@ -76,13 +78,21 @@ map_CC_Vol <- map_CC_Vol %>%
   select (Site, Nursing.Station.Code, CostCenter, VolumeID) %>%
   mutate(Nursing.Station.Code = as.character(Nursing.Station.Code)) %>%
   drop_na()
-if(any(!unique(map_CC_Vol$Site) %in% unique(data_census$Site))){
-  site.Table <- as.data.frame(rbind(site_MSM, site_MSW, site_MSBI, site_MSB))
-  colnames(site.Table) <- c('Site', 'Site.New')
-  site.Table <- site.Table %>% mutate(Site = as.character(Site))
-  map_CC_Vol <- left_join(map_CC_Vol, site.Table)
-  map_CC_Vol <- map_CC_Vol %>% mutate(Site = NULL) %>% rename(Site = Site.New)
-} #depending on old or new names used for sites update dictionary
+# if any of the files have old site names update them to new site names
+if(any(!unique(map_CC_Vol$Site) %in% site_names) | any(!unique(data_census$Site) %in% site_names)){
+  for(i in 1:length(site_names)){
+  data_census$Site <- gsub(paste(unlist(site_old_names[i]),collapse = "|"), site_names[i],data_census$Site)
+  map_CC_Vol$Site <- gsub(paste(unlist(site_old_names[i]),collapse = "|"), site_names[i],map_CC_Vol$Site)
+  }
+}
+
+#if(any(!unique(map_CC_Vol$Site) %in% unique(data_census$Site))){
+  #site.Table <- as.data.frame(rbind(site_MSM, site_MSW, site_MSBI, site_MSB))
+  #colnames(site.Table) <- c('Site', 'Site.New')
+  #site.Table <- site.Table %>% mutate(Site = as.character(Site))
+  #map_CC_Vol <- left_join(map_CC_Vol, site.Table)
+  #map_CC_Vol <- map_CC_Vol %>% mutate(Site = NULL) %>% rename(Site = Site.New)
+#} #depending on old or new names used for sites update dictionary
 data_upload <- left_join(data_census, map_CC_Vol)
 data_upload <- left_join(data_upload, dict_PC)
 
@@ -105,7 +115,7 @@ upload_file <- function(site.census, site.premier, map_cc){
     summarise(Volume = sum(Census.Day, na.rm=T)) %>%
     mutate(Budget = 0)
   upload <- na.omit(upload)
-  #Adding Zeros
+  #Adding Zeros for nursing stations with no census
   payperiods <- upload %>% ungroup() %>% select(Start.Date, End.Date) %>% distinct()
   map_cc <- map_cc %>% filter(Site %in% site.census) %>% select(CostCenter,VolumeID) %>% distinct()
   map_cc <- merge(map_cc, payperiods)
@@ -118,9 +128,20 @@ upload_file <- function(site.census, site.premier, map_cc){
   upload$Concat <- NULL
   return(upload)
 }
-data_upload_MSW <- upload_file(site_MSW, 'NY2162', map_CC_Vol)
-data_upload_MSM <- upload_file(site_MSM, 'NY2163', map_CC_Vol)
-data_upload_MSBIB <- rbind(upload_file(site_MSBI,'630571', map_CC_Vol), upload_file(site_MSB,'630571', map_CC_Vol))
+#If there is a payperiod that goes into a different calendar year
+new_start_end <- function(upload_file){
+  if(exists('pp.end.new')){
+    upload_file$End.Date <- gsub(format(pp.end,"%m/%d/%Y"),format(pp.end.new,"%m/%d/%Y"), upload_file$End.Date)
+    return(upload_file)
+  }else if(exists('pp.start.new')){
+    upload_file$Start.Date <- gsub(format(pp.start,"%m/%d/%Y"),format(pp.start.new,"%m/%d/%Y"), upload_file$End.Date)
+    return(upload_file)
+  }else{return(upload_file)}
+}
+
+data_upload_MSW <- new_start_end(upload_file(site_names[4], 'NY2162', map_CC_Vol))
+data_upload_MSM <- new_start_end(upload_file(site_names[3], 'NY2163', map_CC_Vol))
+data_upload_MSBIB <- new_start_end(rbind(upload_file(site_names[1],'630571', map_CC_Vol), upload_file(site_names[2],'630571', map_CC_Vol)))
 
 # Export Files ------------------------------------------------------------
 #setwd(paste0(dir, '/Upload Files'))
@@ -132,8 +153,10 @@ write.table(data_upload_MSBIB, file = paste0(dir,'/Upload Files',"/MSBIB_Census 
 quality_chart <- function(data, site.census) {
   data_chart <- data_upload %>% ungroup()  %>% filter(Site == site.census) %>%
     select(Nursing.Station.Code, CostCenter, End.Date,Census.Day) %>%
+    arrange(End.Date) %>%
     mutate(End.Date = format(End.Date, "%m.%d.%y")) %>%
-    pivot_wider(names_from = End.Date, values_from = Census.Day, values_fn = list(Census.Day = sum))
+    pivot_wider(names_from = End.Date, values_from = Census.Day, values_fn = list(Census.Day = sum))%>%
+    arrange(Nursing.Station.Code)
 }
 chart_master <- lapply(as.list(unique(data_upload$Site)), function(x) quality_chart(data_upload, x))
 
