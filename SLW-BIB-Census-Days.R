@@ -8,14 +8,14 @@ library(xlsx)
 pp.start <- as.Date('2020-11-22') # start date of first pay period needed
 pp.end <- as.Date('2021-01-02') # end date of the last pay period needed
 if(pp.end < pp.start){stop("End date before Start date")} # inital QC check on date range
-warning("Update Pay Periods Start and End Dates Needed:") #reminder to updated dates
+warning("Update Pay Periods Start and End Dates Needed:") #reminder to update dates
 cat(paste("Pay period starting on",format(pp.start, "%m/%d/%Y"), 'and ending on',format(pp.end, "%m/%d/%Y") ),fill = T)
 Sys.sleep(2)
 
 # Constants ---------------------------------------------------------------
-#Current names of sites (order matters)
+#Current names of sites - one for each site (order matters)
 site_names <- c("MSB", "MSBI", "MSM", "MSW")
-# Old site names (order matters, must match above)
+# Old site names - all old names and current name (order matters, must match above)
 site_old_names <- list(c("BIB","MSB"), c("BIPTR","MSBITR","MSBI"),c("STL","MSM"), c("RVT","MSW"))
 #Names of sites in census files (old, new)
 #site_MSW <- c('RVT', 'MSW')
@@ -29,6 +29,11 @@ map_CC_Vol <-  read.xlsx(paste0(dir, '/BIBSLW_Volume ID_Cost Center_ Mapping.xls
 dict_PC <- read.xlsx(paste0(dir,'/Pay Cycle Dictionaries.xlsx'), sheetIndex = 1)
 colnames(dict_PC)[1] <- 'Census.Date'
 dict_PC <- dict_PC %>% drop_na()
+#Checking dates requested are valid payperiods
+if(!pp.start %in% dict_PC$Start.Date){
+  stop("Start date entered is not the start of a payperiod, please enter another start date")
+}else if(!pp.end %in% dict_PC$End.Date){stop("End date entered is not the end of a pay period, please enter another end date")}
+
 
 # Import Data -------------------------------------------------------------
 import_recent_file <- function(folder.path, place) {
@@ -62,13 +67,16 @@ if(pp.end > range(data_census$Census.Date)[2] | pp.start <range(data_census$Cens
     stop('Data Missing from Census file for Pay Periods Needed. Please add most recent file to the source data folder.')
   }}
 
+#Checking if any sites have been renamed in Census file
+if(any(!c(as.vector(unique(data_census$Site), mode = 'any'),"MSL") %in% c(site_names,unlist(site_old_names)))){
+  new_site_names <- which(!c(as.vector(unique(data_census$Site),mode = 'any'),"MSL","MSP") %in% c(site_names,unlist(site_old_names)))
+  new_site_names <- c(as.vector(unique(data_census$Site),mode = 'any'),"MSL","MSP")[new_site_names]
+  warning("New site name(s) found: ",paste(new_site_names,collapse = ", "))
+  stop("Please update the new site names in the constants section and rerun code")
+}
+
 #Checking the pay cycle dictionary is up to date
 if(range(data_census$Census.Date)[2] > range(dict_PC$End.Date)[2]){stop("Update Pay Cycle Dictionary")}
-
-#Checking dates requested are payperiods
-if(!pp.start %in% dict_PC$Start.Date){
-  stop("Start date entered is not the start of a payperiod, please enter another start date")
-}else if(!pp.end %in% dict_PC$End.Date){stop("End date entered is not the end of a pay period, please enter another end date")}
 
 # Pre Processing ----------------------------------------------------------
 data_census <- data_census %>%
@@ -77,7 +85,7 @@ data_census <- data_census %>%
 map_CC_Vol <- map_CC_Vol %>%
   select (Site, Nursing.Station.Code, CostCenter, VolumeID) %>%
   mutate(Nursing.Station.Code = as.character(Nursing.Station.Code)) %>%
-  drop_na()
+  drop_na() %>% distinct()
 # if any of the files have old site names update them to new site names
 if(any(!unique(map_CC_Vol$Site) %in% site_names) | any(!unique(data_census$Site) %in% site_names)){
   for(i in 1:length(site_names)){
@@ -144,10 +152,9 @@ data_upload_MSM <- new_start_end(upload_file(site_names[3], 'NY2163', map_CC_Vol
 data_upload_MSBIB <- new_start_end(rbind(upload_file(site_names[1],'630571', map_CC_Vol), upload_file(site_names[2],'630571', map_CC_Vol)))
 
 # Export Files ------------------------------------------------------------
-#setwd(paste0(dir, '/Upload Files'))
-write.table(data_upload_MSW, file = paste0(dir,'/Upload Files', "/MSW_Census Days_", format(pp.start,"%d%b%y"), " to ", format(pp.end, "%d%b%y"), ".csv"), sep = ',' , row.names = F,col.names = F)
-write.table(data_upload_MSM, file = paste0(dir,'/Upload Files',"/MSM_Census Days_", format(pp.start,"%d%b%y"), " to ", format(pp.end, "%d%b%y"), ".csv"), sep = ',', row.names = F, col.names = F)
-write.table(data_upload_MSBIB, file = paste0(dir,'/Upload Files',"/MSBIB_Census Days_", format(pp.start,"%d%b%y"), " to ", format(pp.end, "%d%b%y"), ".csv"), sep = ',', row.names = F, col.names = F)
+write.table(data_upload_MSW, file = paste0(dir,'/Upload Files', "/MSW_Census Days_", if(exists('pp.start.new')){format(pp.start.new,"%d%b%y")}else{format(pp.start,"%d%b%y")}, " to ", if(exists('pp.end.new')){format(pp.end.new,"%d%b%y")}else{format(pp.end, "%d%b%y")}, ".csv"), sep = ',' , row.names = F,col.names = F)
+write.table(data_upload_MSM, file = paste0(dir,'/Upload Files',"/MSM_Census Days_", if(exists('pp.start.new')){format(pp.start.new,"%d%b%y")}else{format(pp.start,"%d%b%y")}, " to ", if(exists('pp.end.new')){format(pp.end.new,"%d%b%y")}else{format(pp.end, "%d%b%y")}, ".csv"), sep = ',', row.names = F, col.names = F)
+write.table(data_upload_MSBIB, file = paste0(dir,'/Upload Files',"/MSBIB_Census Days_", if(exists('pp.start.new')){format(pp.start.new,"%d%b%y")}else{format(pp.start,"%d%b%y")}, " to ", if(exists('pp.end.new')){format(pp.end.new,"%d%b%y")}else{format(pp.end, "%d%b%y")}, ".csv"), sep = ',', row.names = F, col.names = F)
 
 # Generating Quality Chart ------------------------------------------------
 quality_chart <- function(data, site.census) {
