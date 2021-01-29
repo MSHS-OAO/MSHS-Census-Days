@@ -17,12 +17,6 @@ Sys.sleep(2)
 site_names <- c("MSB", "MSBI", "MSM", "MSW")
 # Old site names - all old names and current name (order matters, must match above)
 site_old_names <- list(c("BIB","MSB"), c("BIPTR","MSBITR","MSBI"),c("STL","MSM"), c("RVT","MSW"))
-#Names of sites in census files (old, new)
-#site_MSW <- c('RVT', 'MSW')
-#site_MSM <- c('STL', 'MSM')
-#site_MSBI <- c('BIPTR', 'MSBITR') #MSBITR was only used for 1 month in Oct 2020
-#site_MSBI <- c('BIPTR', 'MSBI') 
-#site_MSB <- c('BIB', 'MSB')
 
 # Import Dictionaries -------------------------------------------------------
 map_CC_Vol <-  read.xlsx(paste0(dir, '/BIBSLW_Volume ID_Cost Center_ Mapping.xlsx'), sheetIndex = 1)
@@ -93,14 +87,6 @@ if(any(!unique(map_CC_Vol$Site) %in% site_names) | any(!unique(data_census$Site)
   map_CC_Vol$Site <- gsub(paste(unlist(site_old_names[i]),collapse = "|"), site_names[i],map_CC_Vol$Site)
   }
 }
-
-#if(any(!unique(map_CC_Vol$Site) %in% unique(data_census$Site))){
-  #site.Table <- as.data.frame(rbind(site_MSM, site_MSW, site_MSBI, site_MSB))
-  #colnames(site.Table) <- c('Site', 'Site.New')
-  #site.Table <- site.Table %>% mutate(Site = as.character(Site))
-  #map_CC_Vol <- left_join(map_CC_Vol, site.Table)
-  #map_CC_Vol <- map_CC_Vol %>% mutate(Site = NULL) %>% rename(Site = Site.New)
-#} #depending on old or new names used for sites update dictionary
 data_upload <- left_join(data_census, map_CC_Vol)
 data_upload <- left_join(data_upload, dict_PC)
 
@@ -146,7 +132,7 @@ new_start_end <- function(upload_file){
     return(upload_file)
   }else{return(upload_file)}
 }
-
+#Creating upload file for each site
 data_upload_MSW <- new_start_end(upload_file(site_names[4], 'NY2162', map_CC_Vol))
 data_upload_MSM <- new_start_end(upload_file(site_names[3], 'NY2163', map_CC_Vol))
 data_upload_MSBIB <- new_start_end(rbind(upload_file(site_names[1],'630571', map_CC_Vol), upload_file(site_names[2],'630571', map_CC_Vol)))
