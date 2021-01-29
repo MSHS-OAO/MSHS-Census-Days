@@ -62,9 +62,9 @@ if(pp.end > range(data_census$Census.Date)[2] | pp.start <range(data_census$Cens
   }}
 
 #Checking if any sites have been renamed in Census file
-if(any(!c(as.vector(unique(data_census$Site), mode = 'any'),"MSL") %in% c(site_names,unlist(site_old_names)))){
-  new_site_names <- which(!c(as.vector(unique(data_census$Site),mode = 'any'),"MSL","MSP") %in% c(site_names,unlist(site_old_names)))
-  new_site_names <- c(as.vector(unique(data_census$Site),mode = 'any'),"MSL","MSP")[new_site_names]
+if(any(!c(as.vector(unique(data_census$Site), mode = 'any')) %in% c(site_names,unlist(site_old_names)))){
+  new_site_names <- which(!c(as.vector(unique(data_census$Site),mode = 'any')) %in% c(site_names,unlist(site_old_names)))
+  new_site_names <- c(as.vector(unique(data_census$Site),mode = 'any'))[new_site_names]
   warning("New site name(s) found: ",paste(new_site_names,collapse = ", "))
   stop("Please update the new site names in the constants section and rerun code")
 }
