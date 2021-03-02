@@ -115,5 +115,5 @@ trend <- master()
 #Upload multiple files if necessary
 
 #start and end should be start and end of what you want to upload
-census_export <- upload(start = "11/22/2020",end = "01/02/2021")
+census_export <- upload(start = "12/20/2020",end = "01/30/2021")
 save()
