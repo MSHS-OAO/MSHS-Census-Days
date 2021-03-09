@@ -5,8 +5,8 @@ library(tidyverse)
 library(xlsx)
 
 # User Input --------------------------------------------------------------
-pp.start <- as.Date('2020-11-22') # start date of first pay period needed
-pp.end <- as.Date('2021-01-02') # end date of the last pay period needed
+pp.start <- as.Date('2020-12-20') # start date of first pay period needed
+pp.end <- as.Date('2021-01-30') # end date of the last pay period needed
 if(pp.end < pp.start){stop("End date before Start date")} # inital QC check on date range
 warning("Update Pay Periods Start and End Dates Needed:") #reminder to update dates
 cat(paste("Pay period starting on",format(pp.start, "%m/%d/%Y"), 'and ending on',format(pp.end, "%m/%d/%Y") ),fill = T)
@@ -128,7 +128,7 @@ new_start_end <- function(upload_file){
     upload_file$End.Date <- gsub(format(pp.end,"%m/%d/%Y"),format(pp.end.new,"%m/%d/%Y"), upload_file$End.Date)
     return(upload_file)
   }else if(exists('pp.start.new')){
-    upload_file$Start.Date <- gsub(format(pp.start,"%m/%d/%Y"),format(pp.start.new,"%m/%d/%Y"), upload_file$End.Date)
+    upload_file$Start.Date <- gsub(format(pp.start,"%m/%d/%Y"),format(pp.start.new,"%m/%d/%Y"), upload_file$Start.Date)
     return(upload_file)
   }else{return(upload_file)}
 }
