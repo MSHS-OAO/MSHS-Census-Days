@@ -128,7 +128,7 @@ new_start_end <- function(upload_file){
     upload_file$End.Date <- gsub(format(pp.end,"%m/%d/%Y"),format(pp.end.new,"%m/%d/%Y"), upload_file$End.Date)
     return(upload_file)
   }else if(exists('pp.start.new')){
-    upload_file$Start.Date <- gsub(format(pp.start,"%m/%d/%Y"),format(pp.start.new,"%m/%d/%Y"), upload_file$End.Date)
+    upload_file$Start.Date <- gsub(format(pp.start,"%m/%d/%Y"),format(pp.start.new,"%m/%d/%Y"), upload_file$Start.Date)
     return(upload_file)
   }else{return(upload_file)}
 }
