@@ -5,8 +5,8 @@ library(tidyverse)
 library(xlsx)
 
 # User Input --------------------------------------------------------------
-pp.start <- as.Date('2020-11-22') # start date of first pay period needed
-pp.end <- as.Date('2021-01-02') # end date of the last pay period needed
+pp.start <- as.Date('2021-01-31') # start date of first pay period needed
+pp.end <- as.Date('2021-02-27') # end date of the last pay period needed
 if(pp.end < pp.start){stop("End date before Start date")} # inital QC check on date range
 warning("Update Pay Periods Start and End Dates Needed:") #reminder to update dates
 cat(paste("Pay period starting on",format(pp.start, "%m/%d/%Y"), 'and ending on',format(pp.end, "%m/%d/%Y") ),fill = T)
@@ -62,9 +62,9 @@ if(pp.end > range(data_census$Census.Date)[2] | pp.start <range(data_census$Cens
   }}
 
 #Checking if any sites have been renamed in Census file
-if(any(!c(as.vector(unique(data_census$Site), mode = 'any'),"MSL") %in% c(site_names,unlist(site_old_names)))){
-  new_site_names <- which(!c(as.vector(unique(data_census$Site),mode = 'any'),"MSL","MSP") %in% c(site_names,unlist(site_old_names)))
-  new_site_names <- c(as.vector(unique(data_census$Site),mode = 'any'),"MSL","MSP")[new_site_names]
+if(any(!c(as.vector(unique(data_census$Site), mode = 'any')) %in% c(site_names,unlist(site_old_names)))){
+  new_site_names <- which(!c(as.vector(unique(data_census$Site),mode = 'any')) %in% c(site_names,unlist(site_old_names)))
+  new_site_names <- c(as.vector(unique(data_census$Site),mode = 'any'))[new_site_names]
   warning("New site name(s) found: ",paste(new_site_names,collapse = ", "))
   stop("Please update the new site names in the constants section and rerun code")
 }
