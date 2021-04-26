@@ -5,8 +5,8 @@ library(tidyverse)
 library(xlsx)
 
 # User Input --------------------------------------------------------------
-pp.start <- as.Date('2021-01-31') # start date of first pay period needed
-pp.end <- as.Date('2021-02-27') # end date of the last pay period needed
+pp.start <- as.Date('2021-02-28') # start date of first pay period needed
+pp.end <- as.Date('2021-03-27') # end date of the last pay period needed
 if(pp.end < pp.start){stop("End date before Start date")} # inital QC check on date range
 warning("Update Pay Periods Start and End Dates Needed:") #reminder to update dates
 cat(paste("Pay period starting on",format(pp.start, "%m/%d/%Y"), 'and ending on',format(pp.end, "%m/%d/%Y") ),fill = T)
