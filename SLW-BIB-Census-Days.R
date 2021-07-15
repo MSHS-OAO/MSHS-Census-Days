@@ -5,8 +5,8 @@ library(tidyverse)
 library(xlsx)
 
 # User Input --------------------------------------------------------------
-pp.start <- as.Date('2020-12-20') # start date of first pay period needed
-pp.end <- as.Date('2021-01-30') # end date of the last pay period needed
+pp.start <- as.Date('2021-05-23') # start date of first pay period needed
+pp.end <- as.Date('2021-06-19') # end date of the last pay period needed
 if(pp.end < pp.start){stop("End date before Start date")} # inital QC check on date range
 warning("Update Pay Periods Start and End Dates Needed:") #reminder to update dates
 cat(paste("Pay period starting on",format(pp.start, "%m/%d/%Y"), 'and ending on',format(pp.end, "%m/%d/%Y") ),fill = T)
@@ -19,7 +19,7 @@ site_names <- c("MSB", "MSBI", "MSM", "MSW")
 site_old_names <- list(c("BIB","MSB"), c("BIPTR","MSBITR","MSBI"),c("STL","MSM"), c("RVT","MSW"))
 
 # Import Dictionaries -------------------------------------------------------
-map_CC_Vol <-  read.xlsx(paste0(dir, '/BIBSLW_Volume ID_Cost Center_ Mapping.xlsx'), sheetIndex = 1)
+map_CC_Vol <- read.xlsx(paste0(dir, '/BIBSLW_Volume ID_Cost Center_ Mapping.xlsx'), sheetIndex = 1)
 dict_PC <- read.xlsx(paste0(dir,'/Pay Cycle Dictionaries.xlsx'), sheetIndex = 1)
 colnames(dict_PC)[1] <- 'Census.Date'
 dict_PC <- dict_PC %>% drop_na()
@@ -78,7 +78,9 @@ data_census <- data_census %>%
          Nursing.Station.Code = as.character(Nursing.Station.Code))
 map_CC_Vol <- map_CC_Vol %>%
   select (Site, Nursing.Station.Code, CostCenter, VolumeID) %>%
-  mutate(Nursing.Station.Code = as.character(Nursing.Station.Code)) %>%
+  mutate(Nursing.Station.Code = as.character(Nursing.Station.Code),
+         CostCenter = as.character(CostCenter),
+         VolumeID = as.character(VolumeID)) %>%
   drop_na() %>% distinct()
 # if any of the files have old site names update them to new site names
 if(any(!unique(map_CC_Vol$Site) %in% site_names) | any(!unique(data_census$Site) %in% site_names)){
