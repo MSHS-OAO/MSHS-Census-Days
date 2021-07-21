@@ -41,6 +41,7 @@ trend <- function(){
                         stringsAsFactors = F,colClasses = c(rep("character",3),rep("numeric",ncol(cols)-3)),check.names = F)
   #bind old master with raw file to create new master
   if(max(master_old$CensusDate) < min(as.Date(raw1$CensusDate,format="%m/%d/%Y"))){
+    colnames(raw1) <- colnames(master_old)
     master_new <- rbind(raw1,master_old)
     master_new <<- master_new
     #pivot old trend to long to prepare for appending current export data
